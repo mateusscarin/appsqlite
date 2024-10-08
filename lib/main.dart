@@ -1,8 +1,8 @@
-import 'package:appsqlite/model/User.dart';
-import 'package:appsqlite/screens/AddUser.dart';
-import 'package:appsqlite/screens/EditUser.dart';
-import 'package:appsqlite/screens/ViewUsers.dart';
-import 'package:appsqlite/services/userService.dart';
+import 'package:appsqlite/model/Book.dart';
+import 'package:appsqlite/screens/AddBook.dart';
+import 'package:appsqlite/screens/EditBook.dart';
+import 'package:appsqlite/screens/ViewBooks.dart';
+import 'package:appsqlite/services/BookService.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Exemplo SQLITE',
+      title: 'Scarin Library',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.teal,
@@ -33,27 +33,28 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late List<User> _userList = <User>[];
-  final _userService = UserService();
+  late List<Book> _bookList = <Book>[];
+  final _bookService = BookService();
 
-  getAllUserDetails() async {
-    var users = await _userService.readAllUsers();
-    _userList = <User>[];
-    users.forEach((user) {
+  getAllBookDetails() async {
+    var books = await _bookService.readAllBooks();
+    _bookList = <Book>[];
+    books.forEach((book) {
       setState(() {
-        var userModel = User();
-        userModel.id = user['id'];
-        userModel.name = user['name'];
-        userModel.email = user['email'];
-        userModel.description = user['description'];
-        _userList.add(userModel);
+        var bookModel = Book();
+        bookModel.id = book['id'];
+        bookModel.title = book['title'];
+        bookModel.numChapters = book['numChapters'];
+        bookModel.numPages = book['numPages'];
+        bookModel.summary = book['summary'];
+        _bookList.add(bookModel);
       });
     });
   }
 
   @override
   void initState() {
-    getAllUserDetails();
+    getAllBookDetails();
     super.initState();
   }
 
@@ -65,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  _deleteFormDialog(BuildContext context, userId) {
+  _deleteFormDialog(BuildContext context, bookId) {
     return showDialog(
         context: context,
         builder: (param) {
@@ -80,10 +81,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       foregroundColor: Colors.white,
                       backgroundColor: Colors.red),
                   onPressed: () async {
-                    var result = await _userService.deleteUser(userId);
+                    var result = await _bookService.deleteBook(bookId);
                     if (result != null) {
                       Navigator.pop(context);
-                      getAllUserDetails();
+                      getAllBookDetails();
                       _showSuccessSnackBar('Usuário Excluído com Sucesso!');
                     }
                   },
@@ -105,10 +106,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("SQLite CRUD"),
+        title: const Text("Livros"),
       ),
       body: ListView.builder(
-          itemCount: _userList.length,
+          itemCount: _bookList.length,
           itemBuilder: (context, index) {
             return Card(
               child: ListTile(
@@ -116,13 +117,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => ViewUser(
-                                user: _userList[index],
+                          builder: (context) => ViewBook(
+                                book: _bookList[index],
                               )));
                 },
                 leading: const Icon(Icons.person),
-                title: Text(_userList[index].name ?? ''),
-                subtitle: Text(_userList[index].email ?? ''),
+                title: Text(_bookList[index].title ?? ''),
+                subtitle: Text(
+                    '${_bookList[index].numPages ?? 'Não informado número de'} páginas'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -131,11 +133,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => EditUser(
-                                        user: _userList[index],
+                                  builder: (context) => EditBook(
+                                        book: _bookList[index],
                                       ))).then((data) {
                             if (data != null) {
-                              getAllUserDetails();
+                              getAllBookDetails();
                               _showSuccessSnackBar(
                                   'Usuário Alterado com Sucesso!');
                             }
@@ -147,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         )),
                     IconButton(
                         onPressed: () {
-                          _deleteFormDialog(context, _userList[index].id);
+                          _deleteFormDialog(context, _bookList[index].id);
                         },
                         icon: const Icon(
                           Icons.delete,
@@ -161,10 +163,10 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const AddUser()))
+                  MaterialPageRoute(builder: (context) => const AddBook()))
               .then((data) {
             if (data != null) {
-              getAllUserDetails();
+              getAllBookDetails();
               _showSuccessSnackBar('Usuário Adicionado com Sucesso!');
             }
           });

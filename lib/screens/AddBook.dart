@@ -21,14 +21,13 @@ class _AddBookState extends State<AddBook> {
   final _bookService = BookService();
 
   @override
-  void initState() {
-    setState(() {
-      _bookTitleController.text = '';
-      _bookNumChaptersController.text = '';
-      _bookNumPagesController.text = '';
-      _bookSummaryController.text = '';
-    });
-    super.initState();
+  void dispose() {
+    // Dispose the controllers to free up resources when the widget is removed
+    _bookTitleController.dispose();
+    _bookNumChaptersController.dispose();
+    _bookNumPagesController.dispose();
+    _bookSummaryController.dispose();
+    super.dispose();
   }
 
   @override
@@ -36,144 +35,151 @@ class _AddBookState extends State<AddBook> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Scarin Library"),
-        backgroundColor: Colors.red, // Cor da AppBar para harmonizar com o design
       ),
       body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Cadastro de Livro',
-                style: TextStyle(
-                  fontSize: 24, // Ajuste de tamanho da fonte
-                  color: Colors.red, // Cor destacada
-                  fontWeight: FontWeight.w600, // Deixa o texto mais proeminente
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Cadastro de Livro',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20.0),
+            _buildTextField(
+              controller: _bookTitleController,
+              label: 'Título',
+              hintText: 'Título do livro',
+              errorText:
+                  _validateTitle ? 'Título do livro não pode ser vazio' : null,
+            ),
+            const SizedBox(height: 20.0),
+            _buildTextField(
+              controller: _bookNumChaptersController,
+              label: 'Capítulos',
+              hintText: 'Número de capítulos',
+              keyboardType: TextInputType.number,
+              errorText: _validateNumChapters
+                  ? 'Capítulos do livro não pode ser vazio'
+                  : null,
+            ),
+            const SizedBox(height: 20.0),
+            _buildTextField(
+              controller: _bookNumPagesController,
+              label: 'Páginas',
+              hintText: 'Número de páginas',
+              keyboardType: TextInputType.number,
+              errorText: _validateNumPages
+                  ? 'Páginas do livro não pode ser vazio'
+                  : null,
+            ),
+            const SizedBox(height: 20.0),
+            _buildTextField(
+              controller: _bookSummaryController,
+              label: 'Resumo',
+              hintText: 'Resumo do livro',
+              maxLength: 500,
+              errorText: _validateSummary ? 'Resumo não pode ser vazio' : null,
+            ),
+            const SizedBox(height: 20.0),
+            Row(
+              children: [
+                _buildButton(
+                  label: 'Salvar',
+                  backgroundColor: Colors.red,
+                  onPressed: _onSave,
                 ),
-              ),
-              const SizedBox(height: 20.0),
-              TextField(
-                controller: _bookTitleController,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  hintText: 'Título do livro',
-                  labelText: 'Título',
-                  errorText: _validateTitle
-                      ? 'Título do livro não pode ser vazio'
-                      : null,
+                const SizedBox(width: 10.0),
+                _buildButton(
+                  label: 'Limpar',
+                  backgroundColor: Colors.grey,
+                  onPressed: _clearForm,
                 ),
-              ),
-              const SizedBox(height: 20.0),
-              TextField(
-                controller: _bookNumChaptersController,
-                keyboardType: TextInputType.number, // Torna o campo numérico
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  hintText: 'Número de capítulos',
-                  labelText: 'Capítulos',
-                  errorText: _validateNumChapters
-                      ? 'Capítulos do livro não pode ser vazio'
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 20.0),
-              TextField(
-                controller: _bookNumPagesController,
-                keyboardType: TextInputType.number, // Campo numérico
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  hintText: 'Número de páginas',
-                  labelText: 'Páginas',
-                  errorText: _validateNumPages
-                      ? 'Páginas do livro não pode ser vazio'
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 20.0),
-              TextField(
-                controller: _bookSummaryController,
-                maxLength: 500, // Limita o resumo a 500 caracteres
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  hintText: 'Resumo do livro',
-                  labelText: 'Resumo',
-                  errorText:
-                      _validateSummary ? 'Resumo não pode ser vazio' : null,
-                ),
-              ),
-              const SizedBox(height: 20.0),
-              Row(
-                children: [
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12.0, 
-                        horizontal: 24.0,
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
-                    ),
-                    onPressed: () async {
-                      setState(() {
-                        _validateTitle = _bookTitleController.text.isEmpty;
-                        _validateNumChapters =
-                            _bookNumChaptersController.text.isEmpty;
-                        _validateNumPages =
-                            _bookNumPagesController.text.isEmpty;
-                        _validateSummary =
-                            _bookSummaryController.text.isEmpty;
-                      });
-
-                      if (!_validateTitle &&
-                          !_validateNumChapters &&
-                          !_validateNumPages &&
-                          !_validateSummary) {
-                        var _book = Book();
-                        _book.title = _bookTitleController.text;
-                        _book.numPages = int.tryParse(_bookNumPagesController.text) ?? 0;
-                        _book.numChapters = int.tryParse(_bookNumChaptersController.text) ?? 0;
-                        _book.summary = _bookSummaryController.text;
-
-                        var result = await _bookService.updateBook(_book);
-                        Navigator.pop(context, result);
-                      }
-                    },
-                    child: const Text('Salvar'),
-                  ),
-                  const SizedBox(width: 10.0),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12.0,
-                        horizontal: 24.0,
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
-                    ),
-                    onPressed: () {
-                      _bookTitleController.clear();
-                      _bookNumPagesController.clear();
-                      _bookSummaryController.clear();
-                    },
-                    child: const Text('Limpar'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  // Método para construir um campo de texto com validação
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hintText,
+    String? errorText,
+    TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        hintText: hintText,
+        labelText: label,
+        errorText: errorText,
+      ),
+    );
+  }
+
+  // Método para construir os botões
+  Widget _buildButton({
+    required String label,
+    required Color backgroundColor,
+    required VoidCallback onPressed,
+  }) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        backgroundColor: backgroundColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(
+          vertical: 12.0,
+          horizontal: 24.0,
+        ),
+        textStyle: const TextStyle(fontSize: 16),
+      ),
+      onPressed: onPressed,
+      child: Text(label),
+    );
+  }
+
+  // Método para salvar o livro
+  void _onSave() async {
+    setState(() {
+      _validateTitle = _bookTitleController.text.isEmpty;
+      _validateNumChapters = _bookNumChaptersController.text.isEmpty;
+      _validateNumPages = _bookNumPagesController.text.isEmpty;
+      _validateSummary = _bookSummaryController.text.isEmpty;
+    });
+
+    if (!_validateTitle &&
+        !_validateNumChapters &&
+        !_validateNumPages &&
+        !_validateSummary) {
+      var book = Book();
+      book.title = _bookTitleController.text;
+      book.numChapters = int.tryParse(_bookNumChaptersController.text) ?? 0;
+      book.numPages = int.tryParse(_bookNumPagesController.text) ?? 0;
+      book.summary = _bookSummaryController.text;
+
+      var result = await _bookService.updateBook(book);
+      Navigator.pop(context, result);
+    }
+  }
+
+  // Método para limpar o formulário
+  void _clearForm() {
+    _bookTitleController.clear();
+    _bookNumChaptersController.clear();
+    _bookNumPagesController.clear();
+    _bookSummaryController.clear();
   }
 }

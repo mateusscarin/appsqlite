@@ -16,9 +16,8 @@ class _ViewBookState extends State<ViewBook> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalhes do Livro"),
-        backgroundColor: Colors.red, // Cor harmonizada com a paleta de cores da aplicação
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,104 +26,87 @@ class _ViewBookState extends State<ViewBook> {
               "Informações do Livro",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.red, // Cor em destaque
                 fontSize: 22,
               ),
             ),
             const SizedBox(height: 20),
             
-            // Exibindo o título do livro
-            Row(
-              children: [
-                const Icon(Icons.book, color: Colors.teal), // Ícone de livro
-                const SizedBox(width: 10),
-                const Text(
-                  'Título:',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.teal,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded( // Expande para ocupar o espaço restante
-                  child: Text(
-                    widget.book.title ?? '',
-                    style: const TextStyle(fontSize: 16),
-                    overflow: TextOverflow.ellipsis, // Elipse se o texto for muito longo
-                  ),
-                ),
-              ],
+            InfoRow(
+              icon: Icons.book,
+              label: 'Título:',
+              value: widget.book.title ?? 'Sem título',
             ),
             const SizedBox(height: 20),
             
-            // Exibindo o número de páginas
-            Row(
-              children: [
-                const Icon(Icons.menu_book, color: Colors.teal), // Ícone de capítulos
-                const SizedBox(width: 10),
-                const Text(
-                  'Capítulos:',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.teal,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${widget.book.numChapters ?? '0'}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Exibindo o número de páginas
-            Row(
-              children: [
-                const Icon(Icons.library_books, color: Colors.teal), // Ícone de páginas
-                const SizedBox(width: 10),
-                const Text(
-                  'Páginas:',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.teal,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${widget.book.numPages ?? '0'} páginas',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
+            InfoRow(
+              icon: Icons.menu_book,
+              label: 'Capítulos:',
+              value: '${widget.book.numChapters ?? 0}',
             ),
             const SizedBox(height: 20),
             
-            // Exibindo o resumo
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Resumo:',
-                  style: TextStyle(
-                    color: Colors.teal,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  widget.book.summary ?? 'Sem resumo disponível.',
-                  style: const TextStyle(fontSize: 16),
-                  textAlign: TextAlign.justify,
-                ),
-              ],
+            InfoRow(
+              icon: Icons.library_books,
+              label: 'Páginas:',
+              value: '${widget.book.numPages ?? 0} páginas',
+            ),
+            const SizedBox(height: 20),
+            
+            const Text(
+              'Resumo:',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              widget.book.summary ?? 'Sem resumo disponível.',
+              style: const TextStyle(fontSize: 16),
+              textAlign: TextAlign.justify,
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const InfoRow({
+    Key? key,
+    required this.icon,
+    required this.label,
+    required this.value,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Theme.of(context).primaryColor),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 16),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

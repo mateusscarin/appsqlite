@@ -2,7 +2,7 @@ import 'package:appsqlite/db_helper/repository.dart';
 import 'package:appsqlite/model/Book.dart';
 
 class BookService {
-  final String referenceTable = 'tb_books';
+  final String referenceTable = 'books';
 
   late Repository _repository;
   BookService() {

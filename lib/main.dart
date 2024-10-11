@@ -33,34 +33,37 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Book> _bookList = <Book>[]; // Removido o 'late'
   final _bookService = BookService();
-  bool _isLoading = true; // Variável para controlar o carregamento
-
-  // Método otimizado para carregar livros
-  getAllBookDetails() async {
-    var books = await _bookService.readAllBooks();
-    _bookList = <Book>[];
-    books.forEach((book) {
-      setState(() {
-        var bookModel = Book();
-        bookModel.id = book['id'];
-        bookModel.title = book['title'];
-        bookModel.numChapters = book['numChapters'];
-        bookModel.numPages = book['numPages'];
-        bookModel.summary = book['summary'];
-        _bookList.add(bookModel);
-      });
-    });
-  }
+  List<dynamic> _bookList = []; // Lista de livros
 
   @override
   void initState() {
-    getAllBookDetails();
     super.initState();
+    _fetchBooks(); // Carrega os livros ao iniciar
   }
 
-  _showSuccessSnackBar(String message) {
+  Future<void> _fetchBooks() async {
+    try {
+      var books = await _bookService.readAllBooks();
+      setState(() {
+        _bookList = books.map((book) {
+          Book bookModel = Book();
+          bookModel.id = book['id'];
+          bookModel.title = book['title'];
+          bookModel.numChapters = int.tryParse(book['num_chapters']);
+          bookModel.numPages = int.tryParse(book['num_pages']);
+          bookModel.summary = book['summary'];
+          return bookModel;
+        }).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar livros: $e')),
+      );
+    }
+  }
+
+  void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -75,10 +78,20 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  _deleteFormDialog(BuildContext context, bookId) {
+  Future<void> _deleteBook(int bookId) async {
+    try {
+      await _bookService.deleteBook(bookId);
+      _showSuccessSnackBar('Livro excluído com sucesso!');
+      _fetchBooks(); // Atualiza a lista após exclusão
+    } catch (e) {
+      _showSuccessSnackBar('Erro ao excluir livro: $e');
+    }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, int bookId) {
     return showDialog(
       context: context,
-      builder: (param) {
+      builder: (context) {
         return AlertDialog(
           title: const Text(
             'Deseja realmente excluir?',
@@ -90,13 +103,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.red,
               ),
-              onPressed: () async {
-                var result = await _bookService.deleteBook(bookId);
-                if (result != null) {
-                  Navigator.pop(context);
-                  getAllBookDetails();
-                  _showSuccessSnackBar('Livro excluído com sucesso!');
-                }
+              onPressed: () {
+                _deleteBook(bookId);
+                Navigator.pop(context);
               },
               child: const Text('Excluir'),
             ),
@@ -105,9 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.teal,
               ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text('Fechar'),
             ),
           ],
@@ -122,80 +129,64 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: const Text("Livros"),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator()) // Indicador de progresso
-          : _bookList.isEmpty
-              ? const Center(child: Text('Nenhum livro encontrado!'))
-              : ListView.builder(
-                  itemCount: _bookList.length,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      child: ListTile(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ViewBook(
-                                book: _bookList[index],
-                              ),
-                            ),
-                          );
-                        },
-                        leading: const Icon(Icons.book),
-                        title: Text(_bookList[index].title ?? ''),
-                        subtitle: Text(
-                            '${_bookList[index].numPages ?? 'Não informado'} páginas'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditBook(
-                                      book: _bookList[index],
-                                    ),
-                                  ),
-                                ).then((data) {
-                                  if (data != null) {
-                                    getAllBookDetails();
-                                    _showSuccessSnackBar(
-                                        'Livro alterado com sucesso!');
-                                  }
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.teal,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                _deleteFormDialog(context, _bookList[index].id);
-                              },
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
+      body: _bookList.isEmpty
+          ? Center(
+              child: Text('Nenhum livro encontrado!',
+                  style: TextStyle(fontSize: 20)))
+          : ListView.builder(
+              itemCount: _bookList.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  child: ListTile(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ViewBook(book: _bookList[index]),
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      ).then(
+                          (_) => _fetchBooks()); // Atualiza a lista ao voltar
+                    },
+                    leading: const Icon(Icons.book),
+                    title: Text(_bookList[index].title ?? ''),
+                    subtitle: Text(
+                        '${_bookList[index].numPages ?? 'Não informado'} páginas'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    EditBook(book: _bookList[index]),
+                              ),
+                            ).then((_) =>
+                                _fetchBooks()); // Atualiza a lista ao voltar
+                          },
+                          icon: const Icon(Icons.edit, color: Colors.teal),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              _confirmDelete(context, _bookList[index].id),
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddBook()),
-          ).then((data) {
-            if (data != null) {
-              getAllBookDetails();
-              _showSuccessSnackBar('Livro adicionado com sucesso!');
-            }
+          ).then((_) {
+            _fetchBooks(); // Atualiza a lista após adicionar um novo livro
+            _showSuccessSnackBar('Livro adicionado com sucesso!');
           });
         },
         child: const Icon(Icons.add),
